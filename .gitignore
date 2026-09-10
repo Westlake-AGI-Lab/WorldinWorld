@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+checkpoints/
+workspace/
+third_party/*
+!third_party/README.md
+*.log
