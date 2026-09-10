@@ -4,6 +4,6 @@
   "prep": {"no_dedup": true},
   "prompt": "Two sleek white humanoid robots tidying a modern monochrome bedroom together, walking around the bed and smoothing a striped duvet, in a bright minimalist black-and-white interior.",
   "scene_prompt": "A bright minimalist bedroom in black and white: dark accent walls, a wooden bed with a neatly made striped duvet, a round mirror above a wooden desk with a laptop, a tall potted fig plant in the corner, white paneled doors and a small bright window, soft even daylight, calm still room, smooth camera movement.",
-  "traj": {"name": "rot70", "pivot": "0,0,10", "yaw_plan": "hold:24,to:-70:32,hold:14,to:40:44,hold:14,to:-70:40,hold:14,to:0:36,hold:0"},
+  "traj": {"name": "pantilt", "pivot": "0,0,10", "pan_tilt": "hold:22,tilt:-26:27,tilt:0:25,tilt:18:27,tilt:0:25,pan:-38:30,pan:0:28,pan:38:29,pan:0:20"},
   "generate": {"prompt": "scene"}
 }

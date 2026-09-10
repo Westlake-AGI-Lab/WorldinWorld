@@ -1,7 +1,7 @@
 """Re-cinematography / bullet-time / editing generation for a prepared case.
 
   python -m wiw.generate --case tennis_bt --traj arc75 --prompt_schedule 3-7:scene
-  python -m wiw.generate --case robot_bedroom --traj rot70 --prompt scene
+  python -m wiw.generate --case robot_bedroom --traj pantilt --prompt scene
   python -m wiw.generate --case bear --traj static --edit polar
 
 Needs (see README): <case>/{frames.npy, latents.pt, context*.pt, depth.npz, traj_<name>/}

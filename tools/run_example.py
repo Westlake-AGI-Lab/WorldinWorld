@@ -70,7 +70,7 @@ def main():
         traj = ["wiw.traj", "--case", gen_case, "--name", t["name"], "--pivot", t.get("pivot", "auto:0")]
         for w in t.get("window", []):
             traj += ["--window", w]
-        for k in ("motion", "yaw_plan", "explore"):
+        for k in ("motion", "pan_tilt", "explore"):
             if k in t:
                 traj += [f"--{k}", t[k]]
         sh(*traj)

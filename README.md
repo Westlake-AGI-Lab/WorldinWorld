@@ -77,11 +77,11 @@ Two examples come with their source video, depth and prompt embeddings, so they 
 # bullet time: the ball freezes in the air for 5 s while the camera sweeps around it and comes back
 python tools/run_example.py examples/tennis_bullet_time
 
-# re-cinematography: a static shot is replayed while the camera turns left and right in place
+# re-cinematography: a static shot is replayed while the camera tilts and pans in place
 python tools/run_example.py examples/robot_bedroom_rotation
 ```
 
-Results land in `workspace/tennis_bt/out/tennis_bt_arc75.mp4` and `workspace/robot_bedroom/out/robot_bedroom_rot70.mp4`. Next to each video a folder with the same name holds what the model was shown: `*_input.mp4` (the warped source), `*_mask.mp4` (how much each token was trusted) and `*_meta.json`. Loading the 14B model takes 5–20 minutes depending on your disk; the generation itself takes about 5 minutes (15 chunks of 16 frames).
+Results land in `workspace/tennis_bt/out/tennis_bt_arc75.mp4` and `workspace/robot_bedroom/out/robot_bedroom_pantilt.mp4`. Next to each video a folder with the same name holds what the model was shown: `*_input.mp4` (the warped source), `*_mask.mp4` (how much each token was trusted) and `*_meta.json`. Loading the 14B model takes 5–20 minutes depending on your disk; the generation itself takes about 5 minutes (15 chunks of 16 frames).
 
 Every example is a `config.json` (video, prompts, camera path) — copy one and change the numbers to get a different shot, e.g. `"window": ["45-124:arc:amp=30"]` for a gentler arc during the freeze, or `"motion": "arc:amp=30"` for a ±30° arc over the whole clip. `python tools/run_example.py <example> --from_scratch` recomputes the depth instead of using the bundled one.
 
@@ -103,7 +103,7 @@ python -m wiw.traj --case mycase --name arc30 --motion arc:amp=30 --pivot auto:0
 python -m wiw.generate --case mycase --traj arc30 --prompt_schedule 1-9:scene
 ```
 
-Camera paths: `--motion` takes `arc:amp=30`, `rot:amp=45` (in-place rotation), `ring:r_ratio=0.3`, `fwdback`, `truck`, `combo`, `canonical:action=pan_left,magnitude=30`, …; `--yaw_plan` scripts an in-place rotation frame by frame; `--explore` takes a keyframe list; any `poses.npy` (camera-to-world, OpenCV, first pose = identity) can be dropped into `workspace/mycase/traj_<name>/` as well. Run `python -m wiw.traj -h` for the full list. Moderate camera moves work best with this release; turning far away from the source view exposes regions the video never showed, which the model has to invent from the prompt.
+Camera paths: `--motion` takes `arc:amp=30`, `rot:amp=45` (in-place rotation), `ring:r_ratio=0.3`, `fwdback`, `truck`, `combo`, `canonical:action=pan_left,magnitude=30`, …; `--pan_tilt` scripts an in-place pan/tilt frame by frame; `--explore` takes a keyframe list; any `poses.npy` (camera-to-world, OpenCV, first pose = identity) can be dropped into `workspace/mycase/traj_<name>/` as well. Run `python -m wiw.traj -h` for the full list. Moderate camera moves work best with this release; turning far away from the source view exposes regions the video never showed, which the model has to invent from the prompt.
 
 Bullet time — freeze frame 45 for 80 frames, move the camera inside the frozen window, and use a "frozen" prompt for the chunks that cover it:
 

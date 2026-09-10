@@ -191,21 +191,27 @@ MOTIONS = {
 # ----------------------------------------------------------------------------- schedules
 
 
-def yaw_schedule(plan, n):
-    """plan: list of ("hold", k) / ("to", yaw_deg, k); yaw eased between targets."""
-    yaws, cur = [], 0.0
+def pan_tilt_schedule(plan, n):
+    """plan: list of ("hold", k) / ("pan" | "tilt", deg, k). Each move is cosine-eased from
+    the current angle to the target (pan > 0 turns right, tilt > 0 looks up); the other axis
+    keeps its angle. Returns per-frame (yaw, pitch) in degrees."""
+    ang = {"pan": [], "tilt": []}
+    cur = {"pan": 0.0, "tilt": 0.0}
     for item in plan:
         if item[0] == "hold":
-            k = item[1] if item[1] > 0 else max(0, n - len(yaws))
-            yaws += [cur] * k
-        else:
-            _, tgt, k = item
-            u = ease5(np.linspace(0, 1, k + 1))[1:]
-            yaws += list(cur + (tgt - cur) * u)
-            cur = float(tgt)
-    yaws = np.asarray(yaws, np.float64)
-    assert len(yaws) == n, f"schedule covers {len(yaws)} frames, expected {n}"
-    return yaws
+            k = item[1] if item[1] > 0 else max(0, n - len(ang["pan"]))
+            for ax in ang:
+                ang[ax] += [cur[ax]] * k
+            continue
+        ax, tgt, k = item
+        assert ax in ang, f"unknown plan item {ax!r}; use hold / pan / tilt"
+        u = ease_cos(np.linspace(0, 1, k + 1))[1:]
+        ang[ax] += list(cur[ax] + (tgt - cur[ax]) * u)
+        other = "tilt" if ax == "pan" else "pan"
+        ang[other] += [cur[other]] * k
+        cur[ax] = float(tgt)
+    assert len(ang["pan"]) == n, f"schedule covers {len(ang['pan'])} frames, expected {n}"
+    return np.asarray(ang["pan"], np.float64), np.asarray(ang["tilt"], np.float64)
 
 
 def explore(segs, n, pivot):
@@ -341,8 +347,9 @@ def main():
                     f"(motions: {', '.join(MOTIONS)})")
     ap.add_argument("--window", action="append", default=[],
                     help="bullet time: 'lo-hi:motion[:args]', repeatable; identity outside")
-    ap.add_argument("--yaw_plan", default=None,
-                    help="in-place yaw schedule 'hold:24,to:-70:32,hold:14,to:40:44,...'")
+    ap.add_argument("--pan_tilt", default=None,
+                    help="in-place pan/tilt schedule 'hold:20,pan:-30:30,pan:30:60,pan:0:30,tilt:-20:30,...' "
+                         "(item = hold:frames | pan:deg:frames | tilt:deg:frames)")
     ap.add_argument("--explore", default=None, help="JSON list of [frames, {theta,x,y,z,yaw,pitch}]")
     a = ap.parse_args()
     case = case_dir(a.case)
@@ -359,21 +366,22 @@ def main():
             wins.append((lo, hi, name, kw))
         c2w = build_windows(n_traj, wins, pivot)
         info.update(kind="bullet", windows=[[lo, hi, nm, kw] for lo, hi, nm, kw in wins])
-    elif a.yaw_plan:
+    elif a.pan_tilt:
         plan = []
-        for item in a.yaw_plan.split(","):
+        for item in a.pan_tilt.split(","):
             p = item.split(":")
-            plan.append(("hold", int(p[1])) if p[0] == "hold" else ("to", float(p[1]), int(p[2])))
-        yaws = yaw_schedule(plan, n_traj - DWELL)
-        c2w = pad_dwell(np.zeros((len(yaws), 3)), np.stack([yaw_rot(y) for y in yaws]), n_traj)
-        info.update(kind="yaw_plan", plan=plan)
+            plan.append(("hold", int(p[1])) if p[0] == "hold" else (p[0], float(p[1]), int(p[2])))
+        yaw, pitch = pan_tilt_schedule(plan, n_traj - DWELL)
+        R = np.stack([rot_yp(y, p) for y, p in zip(yaw, pitch)])
+        c2w = pad_dwell(np.zeros((len(yaw), 3)), R, n_traj)
+        info.update(kind="pan_tilt", plan=plan)
     elif a.explore:
         segs = [(int(k), dict(t)) for k, t in json.loads(a.explore)]
         pos, R = explore(segs, n_traj - DWELL, pivot)
         c2w = pad_dwell(pos, R, n_traj)
         info.update(kind="explore", segs=segs)
     else:
-        assert a.motion, "give --motion, --window, --yaw_plan or --explore"
+        assert a.motion, "give --motion, --window, --pan_tilt or --explore"
         name, kw = parse_motion(a.motion)
         pos, R = MOTIONS[name](n_traj - DWELL, pivot, **kw)
         pos = np.asarray(pos, np.float64)
