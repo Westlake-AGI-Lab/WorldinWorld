@@ -2,7 +2,6 @@
 
   python tools/download_weights.py                 # everything into ./checkpoints
   python tools/download_weights.py --only lingbot  # base video model only (~86 GB)
-  python tools/download_weights.py --mirror        # use hf-mirror.com (useful in mainland China)
 
 Weights:
   lingbot   robbyant/lingbot-world-v2-14b-causal-fast  (~86 GB, CC BY-NC-SA 4.0)
@@ -22,11 +21,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dst", default=os.path.join(ROOT, "checkpoints"))
     ap.add_argument("--only", default="lingbot,vda,cow")
-    ap.add_argument("--mirror", action="store_true", help="download through https://hf-mirror.com")
+    ap.add_argument("--endpoint", default=None, help="alternative Hugging Face endpoint URL")
     ap.add_argument("--vda_repo", default=os.path.join(ROOT, "third_party", "Video-Depth-Anything"))
     a = ap.parse_args()
-    if a.mirror:
-        os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+    if a.endpoint:
+        os.environ["HF_ENDPOINT"] = a.endpoint
     want = set(a.only.split(","))
     os.makedirs(a.dst, exist_ok=True)
     if "lingbot" in want:

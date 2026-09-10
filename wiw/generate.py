@@ -130,7 +130,7 @@ def run(a, pipe=None):
     traj_dir = os.path.join(case, f"traj_{a.traj}")
     assert os.path.isdir(traj_dir), f"missing trajectory {traj_dir} (create it with wiw.traj)"
     out_dir = a.out or os.path.join(case, "out")
-    tag = a.tag or f"{os.path.basename(case)}_{a.traj}" + (f"_edit_{a.edit}" if a.edit else "")
+    tag = a.tag or f"{os.path.basename(os.path.normpath(case))}_{a.traj}" + (f"_edit_{a.edit}" if a.edit else "")
     os.makedirs(out_dir, exist_ok=True)
 
     frames = np.load(os.path.join(case, "frames.npy"))
@@ -140,10 +140,13 @@ def run(a, pipe=None):
     edit_cut = edit_paste = edit_hole = None
     if a.edit:
         ez = np.load(os.path.join(case, f"edit_{a.edit}.npz"), allow_pickle=True)
+        assert tuple(ez["frame0"].shape) == tuple(frames[0].shape), "edit package does not match the case frames"
+        assert tuple(ez["latents"].shape) == tuple(latents.shape), "edit package does not match the case latents"
         frames = frames.copy()
         frames[0] = ez["frame0"]
         latents = torch.from_numpy(np.asarray(ez["latents"])).to(latents.dtype)
         mask = np.asarray(ez["mask"]) > 128
+        assert mask.shape[1:] == frames.shape[1:3] and len(mask) >= len(frames) - 8, "edit masks do not match the frames"
         if not a.prompt:
             prompt = f"edit_{a.edit}"
         if a.edit_recam:
@@ -167,7 +170,7 @@ def run(a, pipe=None):
     tracks = None
     if a.cgar:
         tracks = os.path.join(case, "tracks.npz")
-        assert os.path.exists(tracks), f"--cgar needs {tracks}: run  python -m wiw.track --case {os.path.basename(case)}"
+        assert os.path.exists(tracks), f"--cgar needs {tracks}: run  python -m wiw.track --case {os.path.basename(os.path.normpath(case))}"
 
     if pipe is None:
         pipe = load_pipe(a.ckpt)

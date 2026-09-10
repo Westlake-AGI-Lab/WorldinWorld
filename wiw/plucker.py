@@ -38,7 +38,8 @@ def build_plucker(traj_dir, n_lat, h, w, lat_h, lat_w, device, param_dtype, srcc
     sees the true world path while the warp material keeps the source-camera world frame."""
     c2ws = np.load(os.path.join(traj_dir, "poses.npy"))
     n = len(c2ws)
-    assert (n - 1) % (n_lat - 1) == 0, f"{n} poses do not align with {n_lat} latents"
+    assert (n - 1) % (n_lat - 1) == 0, \
+        f"{n} poses in {traj_dir} do not match the clip: expected {4 * (n_lat - 1) + 1} (= frames - 8)"
     Ks = load_K4(traj_dir, h, w)
     abs_poses = interpolate_camera_poses(src_indices=np.linspace(0, n - 1, n), src_rot_mat=c2ws[:, :3, :3],
                                          src_trans_vec=c2ws[:, :3, 3], tgt_indices=np.linspace(0, n - 1, n_lat))

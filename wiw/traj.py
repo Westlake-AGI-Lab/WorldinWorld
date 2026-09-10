@@ -102,12 +102,6 @@ def m_arc_rep(n, pivot, amp=45.0, reps=2, side=0):
     return np.vstack(P), np.vstack(R)
 
 
-def m_orbit360(n, pivot, direction=1):
-    yaws = 360.0 * direction * ease5(np.linspace(0, 1, n))
-    P, R = zip(*[orbit_pose(y, pivot) for y in yaws])
-    return np.stack(P), np.stack(R)
-
-
 def m_ring(n, pivot, r_ratio=0.3, ry=1.0):
     """Camera moves on a circle in the image plane (up -> right -> down -> left) and keeps
     looking at the pivot. r_ratio is the radius relative to the pivot distance."""
@@ -190,7 +184,7 @@ def m_canonical(n, pivot, action="pan_left", magnitude=30.0):
 
 
 MOTIONS = {
-    "arc": m_arc, "arc_rep": m_arc_rep, "orbit360": m_orbit360, "ring": m_ring, "combo": m_combo,
+    "arc": m_arc, "arc_rep": m_arc_rep, "ring": m_ring, "combo": m_combo,
     "dash": m_dash, "fwdback": m_fwdback, "truck": m_truck, "rot": m_rot, "canonical": m_canonical,
 }
 
@@ -311,8 +305,9 @@ def save_traj(tdir, c2w, info):
 
 
 def parse_motion(spec):
-    """'arc:amp=75,weights=1-2-1' -> ('arc', {...}); numbers parsed, '-' separated -> tuple."""
+    """'arc:amp=30,weights=1-2-1' -> ('arc', {...}); numbers parsed, '-' separated -> tuple."""
     name, _, args = spec.partition(":")
+    assert name in MOTIONS, f"unknown motion {name!r}; choose from {', '.join(MOTIONS)}"
     kw = {}
     for a in [x for x in args.split(",") if x]:
         k, _, v = a.partition("=")
@@ -341,8 +336,9 @@ def main():
     ap.add_argument("--case", required=True, help="case name or directory")
     ap.add_argument("--name", required=True, help="trajectory name -> <case>/traj_<name>/")
     ap.add_argument("--pivot", default="auto:0", help="'auto[:frame]' | 'x,y,z' | 'z'")
-    ap.add_argument("--motion", default=None, help="whole-clip motion, e.g. 'arc:amp=60' "
-                    "'rot:amp=45' 'ring:r_ratio=0.3' 'orbit360' 'canonical:action=pan_left,magnitude=30'")
+    ap.add_argument("--motion", default=None, help="whole-clip motion, e.g. 'arc:amp=30' 'rot:amp=45' "
+                    "'ring:r_ratio=0.3' 'fwdback' 'truck' 'combo' 'canonical:action=pan_left,magnitude=30' "
+                    f"(motions: {', '.join(MOTIONS)})")
     ap.add_argument("--window", action="append", default=[],
                     help="bullet time: 'lo-hi:motion[:args]', repeatable; identity outside")
     ap.add_argument("--yaw_plan", default=None,

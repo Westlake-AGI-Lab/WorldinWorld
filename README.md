@@ -24,7 +24,7 @@ Everything we want to control (the source video, its geometry, the camera) is tu
 <details>
 <summary><b>What's released</b></summary>
 
-The warping-based part of World in World: **free-camera re-cinematography** (replay a video along any new camera path — arcs, orbits, pans, in-place rotations, free exploration), **bullet time** (freeze the action at any frame and move the camera around the frozen moment) and **video editing** (edit the first frame, the edit follows through the whole clip, optionally with a new camera). These are the code and default settings behind the corresponding results on the project page; the remaining parts of the paper are listed in the [roadmap](#roadmap) below.
+The warping-based part of World in World: **free-camera re-cinematography** (replay a video along a new camera path — arcs, pans, in-place rotations, dolly and truck moves, free exploration), **bullet time** (freeze the action at any frame and move the camera around the frozen moment) and **video editing** (edit the first frame, the edit follows through the whole clip, optionally with a new camera). These are the code and default settings behind the corresponding results on the project page; the remaining parts of the paper are listed in the [roadmap](#roadmap) below.
 
 </details>
 
@@ -32,18 +32,18 @@ The warping-based part of World in World: **free-camera re-cinematography** (rep
 - [x] Free-camera re-cinematography
 - [x] Bullet time
 - [x] Video editing
-- [ ] Large-angle human re-shooting with the 3D body proxy
+- [ ] Large-angle and 360° re-shooting with the 3D body proxy
 - [ ] Cross-model memory sharing
 - [ ] Frustum memory for long videos
 - [ ] Streaming / interactive generation
-- [ ] Multi-view keyframe generation and motion transfer
+- [ ] Motion transfer
 
 ## Installation
 
-Tested on Linux with an 80 GB A100 (peak memory ~72 GB), CUDA 12.4, Python 3.10.
+Tested on Linux with an 80 GB A100 (peak memory ~72 GB), CUDA 12.4, Python 3.10. All commands below are run from the repository root.
 
 ```bash
-git clone <this repository> worldinworld && cd worldinworld
+git clone git@github.com:Westlake-AGI-Lab/WorldinWorld.git && cd WorldinWorld
 conda create -n wiw python=3.10 -y && conda activate wiw
 
 # PyTorch 2.6 (cu124), then everything else
@@ -54,7 +54,7 @@ pip install -r requirements.txt
 pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
 ```
 
-Model weights (~86 GB; downloads resume if interrupted; add `--mirror` to go through hf-mirror.com):
+Model weights (~86 GB; the download resumes if interrupted):
 
 ```bash
 python tools/download_weights.py --only lingbot          # base model — enough for the bundled examples
@@ -74,18 +74,19 @@ Weights and repositories can live anywhere — see the environment variables at 
 Two examples come with their source video, depth and prompt embeddings, so they run with only the base model:
 
 ```bash
-# bullet time: the ball freezes in the air for 5 s while the camera sweeps a 150° arc around it
+# bullet time: the ball freezes in the air for 5 s while the camera sweeps around it and comes back
 python tools/run_example.py examples/tennis_bullet_time
 
-# re-cinematography: a static shot is replayed with large in-place camera rotations (-70° / +40° / -70°)
+# re-cinematography: a static shot is replayed while the camera turns left and right in place
 python tools/run_example.py examples/robot_bedroom_rotation
 ```
 
 Results land in `workspace/tennis_bt/out/tennis_bt_arc75.mp4` and `workspace/robot_bedroom/out/robot_bedroom_rot70.mp4`. Next to each video a folder with the same name holds what the model was shown: `*_input.mp4` (the warped source), `*_mask.mp4` (how much each token was trusted) and `*_meta.json`. Loading the 14B model takes 5–20 minutes depending on your disk; the generation itself takes about 5 minutes (15 chunks of 16 frames).
 
-Every example is a `config.json` (video, prompts, camera path) — copy one and change the numbers to get a different shot, e.g. `"window": ["45-124:orbit360"]` for a full orbit during the freeze, or `"motion": "arc:amp=60"` for a ±60° arc over the whole clip. `python tools/run_example.py <example> --from_scratch` recomputes the depth instead of using the bundled one.
+Every example is a `config.json` (video, prompts, camera path) — copy one and change the numbers to get a different shot, e.g. `"window": ["45-124:arc:amp=30"]` for a gentler arc during the freeze, or `"motion": "arc:amp=30"` for a ±30° arc over the whole clip. `python tools/run_example.py <example> --from_scratch` recomputes the depth instead of using the bundled one.
 
-## Your own video
+<details>
+<summary><b>Your own video</b></summary>
 
 The whole chain is four commands. Frames are cover-resized to 832×464 and the clip is trimmed to a multiple of 16 frames (+5); clips of 5–15 s work well — cut longer videos with `--start` / `--max_frames`.
 
@@ -97,19 +98,19 @@ python -m wiw.prep --video clip.mp4 --case mycase \
 # 2. depth
 python -m wiw.depth --case mycase
 # 3. a camera path (--pivot auto puts the subject at the centre of the motion)
-python -m wiw.traj --case mycase --name arc60 --motion arc:amp=60 --pivot auto:0
+python -m wiw.traj --case mycase --name arc30 --motion arc:amp=30 --pivot auto:0
 # 4. generate: chunk 0 uses the full prompt, later chunks the scene prompt
-python -m wiw.generate --case mycase --traj arc60 --prompt_schedule 1-9:scene
+python -m wiw.generate --case mycase --traj arc30 --prompt_schedule 1-9:scene
 ```
 
-Camera paths: `--motion` takes `arc:amp=60`, `orbit360`, `ring:r_ratio=0.3`, `rot:amp=45` (in-place rotation), `fwdback`, `truck`, `combo`, `canonical:action=pan_left,magnitude=30`, …; `--yaw_plan` scripts an in-place rotation frame by frame; `--explore` takes a keyframe list; any `poses.npy` (camera-to-world, OpenCV, first pose = identity) can be dropped into `workspace/mycase/traj_<name>/` as well. Run `python -m wiw.traj -h` for the full list.
+Camera paths: `--motion` takes `arc:amp=30`, `rot:amp=45` (in-place rotation), `ring:r_ratio=0.3`, `fwdback`, `truck`, `combo`, `canonical:action=pan_left,magnitude=30`, …; `--yaw_plan` scripts an in-place rotation frame by frame; `--explore` takes a keyframe list; any `poses.npy` (camera-to-world, OpenCV, first pose = identity) can be dropped into `workspace/mycase/traj_<name>/` as well. Run `python -m wiw.traj -h` for the full list. Moderate camera moves work best with this release; turning far away from the source view exposes regions the video never showed, which the model has to invent from the prompt.
 
 Bullet time — freeze frame 45 for 80 frames, move the camera inside the frozen window, and use a "frozen" prompt for the chunks that cover it:
 
 ```bash
 python -m wiw.bullet --case mycase --out mycase_bt --freeze 45:80
-python -m wiw.traj --case mycase_bt --name arc75 --pivot auto:45 --window 45-124:arc:amp=75
-python -m wiw.generate --case mycase_bt --traj arc75 --prompt_schedule 3-7:scene
+python -m wiw.traj --case mycase_bt --name arc45 --pivot auto:45 --window 45-124:arc:amp=45
+python -m wiw.generate --case mycase_bt --traj arc45 --prompt_schedule 3-7:scene
 ```
 
 Video editing — edit the first frame with any image editor, provide per-frame masks of the edited region (e.g. from SAM2/SAM3 video propagation, or a single mask for static regions), then:
@@ -117,7 +118,7 @@ Video editing — edit the first frame with any image editor, provide per-frame 
 ```bash
 python -m wiw.edit --case mycase --name red_dress --frame0 edited_frame0.png --mask masks/ --prompt "<edited video>"
 python -m wiw.generate --case mycase --traj static --edit red_dress              # keep the camera
-python -m wiw.generate --case mycase --traj arc45  --edit red_dress --edit_recam # edit + new camera
+python -m wiw.generate --case mycase --traj arc30  --edit red_dress --edit_recam # edit + new camera
 ```
 
 Correspondence-guided attention (optional, off by default) — links every generated token to the source token that shows the same physical point at the same moment; it helps most on fast, articulated motion. It needs dense point tracks from [CoWTracker](https://github.com/facebookresearch/cowtracker), which take roughly a minute per 16 frames on an A100 (~15–20 min for a 15 s clip):
@@ -126,12 +127,14 @@ Correspondence-guided attention (optional, off by default) — links every gener
 git clone --recurse-submodules https://github.com/facebookresearch/cowtracker.git third_party/CoWTracker
 python tools/download_weights.py --only cow
 python -m wiw.track --case mycase                       # writes mycase/tracks.npz (redo it for a bullet-time case)
-python -m wiw.generate --case mycase --traj arc60 --prompt_schedule 1-9:scene --cgar
+python -m wiw.generate --case mycase --traj arc30 --prompt_schedule 1-9:scene --cgar
 ```
 
 For the bundled examples `python tools/run_example.py <example> --cgar` does the same.
 
 Two things that matter in practice: keep people and moving objects out of the scene prompt (once the camera looks away, the text prior likes to invent extra subjects), and use `--srccam` with a `srccam.npz` (per-frame camera-to-world of the source) when the source video was shot with a moving camera. `python -m wiw.generate -h` lists the remaining knobs (evidence steps, amplification weight, seed).
+
+</details>
 
 ## Acknowledgments
 
