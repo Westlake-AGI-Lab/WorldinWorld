@@ -81,7 +81,7 @@ python tools/run_example.py examples/tennis_bullet_time
 python tools/run_example.py examples/robot_bedroom_rotation
 ```
 
-Results land in `workspace/tennis_bt/out/tennis_bt_arc75.mp4` and `workspace/robot_bedroom/out/robot_bedroom_pantilt.mp4`. Next to each video a folder with the same name holds what the model was shown: `*_input.mp4` (the warped source), `*_mask.mp4` (how much each token was trusted) and `*_meta.json`. Loading the 14B model takes 5–20 minutes depending on your disk; the generation itself takes about 5 minutes (15 chunks of 16 frames).
+Results land in `workspace/tennis_bt/out/tennis_bt_arc75.mp4` and `workspace/robot_bedroom/out/robot_bedroom_pantilt.mp4`. Next to each video a folder with the same name holds what the model was shown: `*_input.mp4` (the warped source), `*_mask.mp4` (how much each token was trusted), `*_maskfused.mp4` (the two combined) and `*_meta.json`. Loading the 14B model takes 5–20 minutes depending on your disk; the generation itself takes about 5 minutes (15 chunks of 16 frames).
 
 Every example is a `config.json` (video, prompts, camera path) — copy one and change the numbers to get a different shot, e.g. `"window": ["45-124:arc:amp=30"]` for a gentler arc during the freeze, or `"motion": "arc:amp=30"` for a ±30° arc over the whole clip. `python tools/run_example.py <example> --from_scratch` recomputes the depth instead of using the bundled one.
 

@@ -94,7 +94,7 @@ def build_parser():
     ap.add_argument("--case", default=None, help="case name (under WIW_WORKSPACE) or directory")
     ap.add_argument("--traj", default=None, help="trajectory name: <case>/traj_<name>/")
     ap.add_argument("--out", default=None, help="output directory (default <case>/out)")
-    ap.add_argument("--tag", default=None, help="output name (default <case>_<traj>)")
+    ap.add_argument("--tag", default=None, help="output name (default <case>_<traj>[_edit_<name>][_cgar])")
     ap.add_argument("--prompt", default="", help="prompt name used for all chunks ('' = context.pt, "
                     "'scene' = context_scene.pt, ...)")
     ap.add_argument("--prompt_schedule", default=None,
@@ -130,7 +130,8 @@ def run(a, pipe=None):
     traj_dir = os.path.join(case, f"traj_{a.traj}")
     assert os.path.isdir(traj_dir), f"missing trajectory {traj_dir} (create it with wiw.traj)"
     out_dir = a.out or os.path.join(case, "out")
-    tag = a.tag or f"{os.path.basename(os.path.normpath(case))}_{a.traj}" + (f"_edit_{a.edit}" if a.edit else "")
+    tag = a.tag or (f"{os.path.basename(os.path.normpath(case))}_{a.traj}" + (f"_edit_{a.edit}" if a.edit else "")
+                    + ("_cgar" if a.cgar else ""))
     os.makedirs(out_dir, exist_ok=True)
 
     frames = np.load(os.path.join(case, "frames.npy"))

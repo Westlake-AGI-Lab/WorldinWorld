@@ -62,7 +62,7 @@ def main():
     sh(*prep)
     if a.from_scratch:
         sh("wiw.depth", "--case", case)
-    if "bullet" in cfg and not os.path.exists(os.path.join(case_dir(gen_case), "frames.npy")):
+    if "bullet" in cfg and (a.from_scratch or not os.path.exists(os.path.join(case_dir(gen_case), "frames.npy"))):
         sh("wiw.bullet", "--case", case, "--out", gen_case, "--freeze", cfg["bullet"]["freeze"])
     if a.cgar and not os.path.exists(os.path.join(case_dir(gen_case), "tracks.npz")):
         sh("wiw.track", "--case", gen_case)
