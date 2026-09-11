@@ -2,14 +2,14 @@
 
 <div align="center">
 
-[![arXiv](https://img.shields.io/badge/arXiv%20paper-coming%20soon-b31b1b)](#)&nbsp;
+[![arXiv](https://img.shields.io/badge/arXiv-2609.11548-b31b1b)](https://arxiv.org/abs/2609.11548)&nbsp;
 [![project page](https://img.shields.io/badge/Project%20page-World%20in%20World-blue)](https://chenxi-song.github.io/worldinworld/)&nbsp;
 
 </div>
 
 ## Update
 - [2026.09] 🔥 **Code released!** Free-camera re-cinematography, bullet time and video editing on real videos.
-- [2026.09] [Project page](https://chenxi-song.github.io/worldinworld/) is online.
+- [2026.09] Paper is on [arXiv](https://arxiv.org/abs/2609.11548); [project page](https://chenxi-song.github.io/worldinworld/) is online.
 
 ## Introduction
 
@@ -19,7 +19,7 @@
 <img src="assets/pipeline.jpg" alt="pipeline" width="80%">
 </div>
 
-Everything we want to control (the source video, its geometry, the camera) is turned into *visual evidence*: the source frames are lifted with depth, warped into the new camera and handed to the model as extra keys/values of its own attention, so the model sees what the new camera should see and paints the rest itself. Details are in the [paper](#) and on the [project page](https://chenxi-song.github.io/worldinworld/).
+Everything we want to control (the source video, its geometry, the camera) is turned into *visual evidence*: the source frames are lifted with depth, warped into the new camera and handed to the model as extra keys/values of its own attention, so the model sees what the new camera should see and paints the rest itself. Details are in the [paper](https://arxiv.org/abs/2609.11548) and on the [project page](https://chenxi-song.github.io/worldinworld/).
 
 <details>
 <summary><b>What's released</b></summary>
@@ -148,7 +148,7 @@ This repository is released under CC BY-NC-SA 4.0 (the license of LingBot-World 
 @article{song2026worldinworld,
   title   = {World in World: Explore the World with World Models},
   author  = {Song, Chenxi and Yang, Yanming and Zhang, Chi},
-  journal = {arXiv preprint},
+  journal = {arXiv preprint arXiv:2609.11548},
   year    = {2026}
 }
 ```
